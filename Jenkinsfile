@@ -55,7 +55,7 @@ pipeline {
                     docker run -d -p 8000:8000 \
                     -e MONGO_URI="${MONGO_URI}" \
                     -e JWT_SECRET="${JWT_SECRET}" \
-                    --name fold-service \
+                    --name fold-backend \
                     $DOCKER_IMAGE:$VERSION
                     '
                     """
