@@ -35,16 +35,31 @@ pipeline {
             }
         }
 
+        stage('Cleanup Docker') {
+            steps {
+                sh 'docker system prune -f'
+            }
+        }
+
         stage('Deploy to Server') {
             steps {
-                sh """
-                ssh $APP_SERVER '
-                docker pull $DOCKER_IMAGE:$VERSION
-                docker stop fold-service || true
-                docker rm fold-service || true
-                docker run -d -p 5000:5000 --name fold-service $DOCKER_IMAGE:$VERSION
-                '
-                """
+                withCredentials([
+                    string(credentialsId: 'MONGO_URI', variable: 'MONGO_URI'),
+                    string(credentialsId: 'JWT_SECRET', variable: 'JWT_SECRET')
+                ]) {
+                    sh """
+                    ssh $APP_SERVER '
+                    docker pull $DOCKER_IMAGE:$VERSION
+                    docker stop fold-backend || true
+                    docker rm fold-backend || true
+                    docker run -d -p 8000:8000 \
+                    -e MONGO_URI="${MONGO_URI}" \
+                    -e JWT_SECRET="${JWT_SECRET}" \
+                    --name fold-service \
+                    $DOCKER_IMAGE:$VERSION
+                    '
+                    """
+                }
             }
         }
     }
